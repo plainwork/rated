@@ -758,10 +758,11 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
 
     private func makeRowView(for item: RatingItem) -> NSView {
         let selectButton = RatingSelectButton(checkboxWithTitle: "", target: self, action: #selector(toggleSelection(_:)))
+        selectButton.isBordered = false
+        selectButton.controlSize = .small
+        selectButton.cell?.controlSize = .small
         selectButton.wantsLayer = true
-        selectButton.layer?.backgroundColor = NSColor.white.cgColor
-        selectButton.layer?.cornerRadius = 4
-        selectButton.layer?.masksToBounds = true
+        selectButton.layer?.backgroundColor = NSColor.clear.cgColor
         selectButton.target = self
         selectButton.action = #selector(toggleSelection(_:))
         selectButton.itemName = item.id
