@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.5 - 2025-12-31
+- new background color (ed32b57)
+
 ## v0.0.4 - 2025-12-31
 - menu icon adjust (03c003e)
 
