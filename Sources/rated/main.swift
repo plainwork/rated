@@ -530,7 +530,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         ])
 
         headerBar.translatesAutoresizingMaskIntoConstraints = false
-        headerBar.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        headerBar.heightAnchor.constraint(equalToConstant: 32).isActive = true
         headerBar.addSubview(addToggleButton)
         headerBar.addSubview(headerTitleLabel)
         headerBar.addSubview(headerMessageLabel)
@@ -570,7 +570,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         container.addSubview(footerBar)
 
         NSLayoutConstraint.activate([
-            headerBar.topAnchor.constraint(equalTo: container.topAnchor),
+            headerBar.topAnchor.constraint(equalTo: container.topAnchor, constant: 6),
             headerBar.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             headerBar.trailingAnchor.constraint(equalTo: container.trailingAnchor),
 
