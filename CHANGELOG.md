@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.2 - 2025-12-31
+- add icons (9aecb03)
+
 ## v0.0.1 - 2025-12-31
 - force version (2265554)
 - add release workflows (84ccaa2)
