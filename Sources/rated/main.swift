@@ -631,7 +631,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
             quitButton.removeTrackingArea(trackingArea)
         }
         let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect]
-        let trackingArea = NSTrackingArea(rect: .zero, options: options, owner: self, userInfo: nil)
+        let trackingArea = NSTrackingArea(rect: .zero, options: options, owner: self, userInfo: ["quit": true])
         quitButton.addTrackingArea(trackingArea)
         quitTrackingArea = trackingArea
         updateListHeight()
@@ -639,10 +639,12 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     }
 
     override func mouseEntered(with event: NSEvent) {
+        guard event.trackingArea?.userInfo?["quit"] != nil else { return }
         quitButton.attributedTitle = makeQuitTitle(isHovered: true)
     }
 
     override func mouseExited(with event: NSEvent) {
+        guard event.trackingArea?.userInfo?["quit"] != nil else { return }
         quitButton.attributedTitle = makeQuitTitle(isHovered: false)
     }
 
@@ -894,8 +896,8 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     }
 
     private func makeQuitTitle(isHovered: Bool) -> NSAttributedString {
-        let mainColor = isHovered ? NSColor.labelColor : NSColor.secondaryLabelColor
-        let hintColor = isHovered ? NSColor.tertiaryLabelColor : NSColor.quaternaryLabelColor
+        let mainColor = isHovered ? NSColor.secondaryLabelColor : NSColor.tertiaryLabelColor
+        let hintColor = NSColor.quaternaryLabelColor
 
         let quitTitle = NSMutableAttributedString(
             string: "Quit",
