@@ -267,6 +267,7 @@ class RatingSelectButton: NSButton {
 
 final class HeaderActionButton: NSButton {
     private var trackingArea: NSTrackingArea?
+    private let padding = NSEdgeInsets(top: 2, left: 8, bottom: 2, right: 8)
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -300,6 +301,19 @@ final class HeaderActionButton: NSButton {
 
     override func mouseExited(with event: NSEvent) {
         layer?.backgroundColor = NSColor.clear.cgColor
+    }
+
+    override func layout() {
+        super.layout()
+        layer?.cornerRadius = bounds.height / 2
+    }
+
+    override var intrinsicContentSize: NSSize {
+        let size = super.intrinsicContentSize
+        return NSSize(
+            width: size.width + padding.left + padding.right,
+            height: size.height + padding.top + padding.bottom
+        )
     }
 }
 
