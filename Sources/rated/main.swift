@@ -410,7 +410,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     private let store = RatingStore()
 
     private let baseWidth: CGFloat = 380
-    private let containerInset: CGFloat = 8
+    private let containerInset: CGFloat = 12
     private let stackSpacing: CGFloat = 10
     private let headerSpacing: CGFloat = 4
     private let nameField = NSTextField(string: "")
@@ -524,8 +524,8 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
             footerSeparator.leadingAnchor.constraint(equalTo: footerBar.leadingAnchor),
             footerSeparator.trailingAnchor.constraint(equalTo: footerBar.trailingAnchor),
 
-            footerRow.leadingAnchor.constraint(equalTo: footerBar.leadingAnchor, constant: 10),
-            footerRow.trailingAnchor.constraint(equalTo: footerBar.trailingAnchor, constant: -10),
+            footerRow.leadingAnchor.constraint(equalTo: footerBar.leadingAnchor, constant: 12),
+            footerRow.trailingAnchor.constraint(equalTo: footerBar.trailingAnchor, constant: -12),
             footerRow.centerYAnchor.constraint(equalTo: footerBar.centerYAnchor)
         ])
 
@@ -545,14 +545,14 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         headerTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         headerMessageLabel.alphaValue = 0
         NSLayoutConstraint.activate([
-            headerTitleLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 8),
+            headerTitleLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 12),
             headerTitleLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
             headerTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: addToggleButton.leadingAnchor, constant: -8),
 
-            headerMessageLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 8),
+            headerMessageLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 12),
             headerMessageLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
             headerMessageLabel.trailingAnchor.constraint(lessThanOrEqualTo: addToggleButton.leadingAnchor, constant: -8),
-            addToggleButton.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor, constant: -8),
+            addToggleButton.trailingAnchor.constraint(equalTo: headerBar.trailingAnchor, constant: -12),
             addToggleButton.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
             addToggleButton.widthAnchor.constraint(equalToConstant: 20),
             addToggleButton.heightAnchor.constraint(equalToConstant: 20)
