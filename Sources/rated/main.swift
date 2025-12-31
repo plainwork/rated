@@ -437,10 +437,14 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         let containerSize = NSSize(width: baseWidth, height: 360)
         let container = NSView(frame: NSRect(origin: .zero, size: containerSize))
         preferredContentSize = containerSize
+        container.wantsLayer = true
+        container.layer?.backgroundColor = NSColor(white: 0.96, alpha: 1).cgColor
 
         nameField.placeholderString = "Thing you are rating"
         nameField.font = NSFont.systemFont(ofSize: 13)
         nameField.delegate = self
+        nameField.drawsBackground = true
+        nameField.backgroundColor = .white
 
         ratingInput.onSelection = { [weak self] value in
             self?.addRating(value: value)
