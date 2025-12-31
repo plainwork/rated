@@ -423,6 +423,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     private let formStack = NSStackView()
     private let mainStack = NSStackView()
     private let headerBar = NSView()
+    private let headerTitleLabel = NSTextField(labelWithString: "Rated")
     private let headerMessageLabel = NSTextField(labelWithString: "")
     private let formContainer = NSView()
     private var formHeightConstraint: NSLayoutConstraint?
@@ -531,13 +532,23 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         headerBar.translatesAutoresizingMaskIntoConstraints = false
         headerBar.heightAnchor.constraint(equalToConstant: 28).isActive = true
         headerBar.addSubview(addToggleButton)
+        headerBar.addSubview(headerTitleLabel)
         headerBar.addSubview(headerMessageLabel)
-        headerMessageLabel.alphaValue = 0
+        headerTitleLabel.alphaValue = 1
         headerMessageLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
         headerMessageLabel.textColor = .secondaryLabelColor
         headerMessageLabel.lineBreakMode = .byTruncatingTail
         headerMessageLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        headerTitleLabel.textColor = .labelColor
+        headerTitleLabel.lineBreakMode = .byTruncatingTail
+        headerTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        headerMessageLabel.alphaValue = 0
         NSLayoutConstraint.activate([
+            headerTitleLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 8),
+            headerTitleLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+            headerTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: addToggleButton.leadingAnchor, constant: -8),
+
             headerMessageLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 8),
             headerMessageLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
             headerMessageLabel.trailingAnchor.constraint(lessThanOrEqualTo: addToggleButton.leadingAnchor, constant: -8),
@@ -804,12 +815,14 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             headerMessageLabel.animator().alphaValue = 1
+            headerTitleLabel.animator().alphaValue = 0
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
             guard let self else { return }
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.3
                 self.headerMessageLabel.animator().alphaValue = 0
+                self.headerTitleLabel.animator().alphaValue = 1
             }
         }
     }
