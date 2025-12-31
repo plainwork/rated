@@ -235,14 +235,13 @@ final class CircleRatingView: NSView {
 
 final class RatingRowView: NSView {
     var onSelect: (() -> Void)?
-    var deleteButton: NSButton?
+    var selectButton: NSButton?
     private var trackingArea: NSTrackingArea?
-    private var deleteTrackingArea: NSTrackingArea?
 
     override func mouseDown(with event: NSEvent) {
-        if let deleteButton = deleteButton {
+        if let selectButton = selectButton {
             let location = convert(event.locationInWindow, from: nil)
-            if deleteButton.frame.contains(location) {
+            if selectButton.frame.contains(location) {
                 return
             }
         }
@@ -255,66 +254,14 @@ final class RatingRowView: NSView {
         if let trackingArea = trackingArea {
             removeTrackingArea(trackingArea)
         }
-        if let deleteTrackingArea = deleteTrackingArea {
-            removeTrackingArea(deleteTrackingArea)
-        }
         let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .mouseMoved, .activeInActiveApp, .inVisibleRect]
         let trackingArea = NSTrackingArea(rect: .zero, options: options, owner: self, userInfo: nil)
         addTrackingArea(trackingArea)
         self.trackingArea = trackingArea
-
-        if let deleteButton = deleteButton {
-            let deleteArea = NSTrackingArea(
-                rect: deleteButton.frame,
-                options: options,
-                owner: self,
-                userInfo: ["delete": true]
-            )
-            addTrackingArea(deleteArea)
-            deleteTrackingArea = deleteArea
-        }
-    }
-
-    override func mouseEntered(with event: NSEvent) {
-        if event.trackingArea?.userInfo?["delete"] != nil {
-            deleteButton?.contentTintColor = NSColor.secondaryLabelColor
-            return
-        }
-        if let deleteButton = deleteButton {
-            deleteButton.isHidden = false
-            deleteButton.contentTintColor = NSColor.tertiaryLabelColor
-        }
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        if event.trackingArea?.userInfo?["delete"] != nil {
-            deleteButton?.contentTintColor = NSColor.tertiaryLabelColor
-            return
-        }
-        if let deleteButton = deleteButton {
-            deleteButton.isHidden = true
-        }
-    }
-
-    override func mouseMoved(with event: NSEvent) {
-        guard let deleteButton = deleteButton else { return }
-        let location = convert(event.locationInWindow, from: nil)
-        if deleteButton.frame.contains(location) {
-            deleteButton.contentTintColor = NSColor.secondaryLabelColor
-        } else {
-            deleteButton.contentTintColor = NSColor.tertiaryLabelColor
-        }
-    }
-
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        if let deleteButton = deleteButton, deleteButton.frame.contains(point) {
-            return deleteButton
-        }
-        return super.hitTest(point)
     }
 }
 
-final class RatingDeleteButton: NSButton {
+final class RatingSelectButton: NSButton {
     var itemName: String?
 }
 
@@ -424,12 +371,15 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     private let mainStack = NSStackView()
     private let headerBar = NSView()
     private let headerTitleLabel = NSTextField(labelWithString: "Rated")
+    private let headerTitleStack = NSStackView()
+    private let headerActionStack = NSStackView()
     private let headerMessageLabel = NSTextField(labelWithString: "")
     private let formContainer = NSView()
     private var formHeightConstraint: NSLayoutConstraint?
     private var listHeightConstraint: NSLayoutConstraint?
     private var quitTrackingArea: NSTrackingArea?
     private let footerBar = NSView()
+    private var selectedItemIDs = Set<String>()
 
     override func loadView() {
         let containerSize = NSSize(width: baseWidth, height: 360)
@@ -532,7 +482,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         headerBar.translatesAutoresizingMaskIntoConstraints = false
         headerBar.heightAnchor.constraint(equalToConstant: 32).isActive = true
         headerBar.addSubview(addToggleButton)
-        headerBar.addSubview(headerTitleLabel)
+        headerBar.addSubview(headerTitleStack)
         headerBar.addSubview(headerMessageLabel)
         headerTitleLabel.alphaValue = 1
         headerMessageLabel.font = NSFont.systemFont(ofSize: 11, weight: .regular)
@@ -544,10 +494,27 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         headerTitleLabel.lineBreakMode = .byTruncatingTail
         headerTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         headerMessageLabel.alphaValue = 0
+        headerActionStack.orientation = .horizontal
+        headerActionStack.alignment = .centerY
+        headerActionStack.spacing = 6
+        headerActionStack.translatesAutoresizingMaskIntoConstraints = false
+        headerActionStack.alphaValue = 0
+
+        let confirmDeleteButton = makeHeaderActionButton(title: "Yes", action: #selector(confirmDeleteSelection))
+        let cancelDeleteButton = makeHeaderActionButton(title: "No", action: #selector(cancelDeleteSelection))
+        headerActionStack.addArrangedSubview(confirmDeleteButton)
+        headerActionStack.addArrangedSubview(cancelDeleteButton)
+
+        headerTitleStack.orientation = .horizontal
+        headerTitleStack.alignment = .centerY
+        headerTitleStack.spacing = 6
+        headerTitleStack.translatesAutoresizingMaskIntoConstraints = false
+        headerTitleStack.addArrangedSubview(headerTitleLabel)
+        headerTitleStack.addArrangedSubview(headerActionStack)
         NSLayoutConstraint.activate([
-            headerTitleLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 12),
-            headerTitleLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
-            headerTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: addToggleButton.leadingAnchor, constant: -8),
+            headerTitleStack.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 12),
+            headerTitleStack.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
+            headerTitleStack.trailingAnchor.constraint(lessThanOrEqualTo: addToggleButton.leadingAnchor, constant: -8),
 
             headerMessageLabel.leadingAnchor.constraint(equalTo: headerBar.leadingAnchor, constant: 12),
             headerMessageLabel.centerYAnchor.constraint(equalTo: headerBar.centerYAnchor),
@@ -586,6 +553,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
             footerBar.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
 
+        updateHeaderState(animated: false)
         view = container
         rebuildList()
         updateFormSpacing(isExpanded: false)
@@ -735,6 +703,15 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     }
 
     private func makeRowView(for item: RatingItem) -> NSView {
+        let selectButton = RatingSelectButton()
+        selectButton.setButtonType(.switch)
+        selectButton.title = ""
+        selectButton.isBordered = false
+        selectButton.target = self
+        selectButton.action = #selector(toggleSelection(_:))
+        selectButton.itemName = item.id
+        selectButton.state = selectedItemIDs.contains(item.id) ? .on : .off
+
         let nameLabel = NSTextField(labelWithString: item.name)
         nameLabel.font = NSFont.systemFont(ofSize: 13, weight: .regular)
         nameLabel.lineBreakMode = .byTruncatingTail
@@ -745,21 +722,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
 
         let spacer = NSView()
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        let deleteButton = RatingDeleteButton(title: "", target: nil, action: nil)
-        let deleteConfig = NSImage.SymbolConfiguration(pointSize: 11, weight: .regular)
-        deleteButton.image = NSImage(systemSymbolName: "trash", accessibilityDescription: nil)?
-            .withSymbolConfiguration(deleteConfig)
-        deleteButton.image?.isTemplate = true
-        deleteButton.contentTintColor = NSColor.tertiaryLabelColor
-        deleteButton.isBordered = false
-        deleteButton.isHidden = true
-        deleteButton.target = self
-        deleteButton.action = #selector(deleteRatingItem(_:))
-        deleteButton.itemName = item.name
-        deleteButton.setButtonType(.momentaryChange)
-
-        let rowStack = NSStackView(views: [deleteButton, nameLabel, spacer, ratingView])
+        let rowStack = NSStackView(views: [selectButton, nameLabel, spacer, ratingView])
         rowStack.orientation = .horizontal
         rowStack.alignment = .centerY
         rowStack.spacing = 8
@@ -770,7 +733,7 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
         container.onSelect = { [weak self] in
             self?.openForm(for: item)
         }
-        container.deleteButton = deleteButton
+        container.selectButton = selectButton
         container.addSubview(rowStack)
         rowStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -780,12 +743,6 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
             rowStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -4)
         ])
         return container
-    }
-
-    @objc private func deleteRatingItem(_ sender: RatingDeleteButton) {
-        guard let name = sender.itemName else { return }
-        store.deleteItem(name: name)
-        rebuildList()
     }
 
     private func openForm(for item: RatingItem) {
@@ -816,15 +773,63 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
             context.duration = 0.2
             headerMessageLabel.animator().alphaValue = 1
             headerTitleLabel.animator().alphaValue = 0
+            headerActionStack.animator().alphaValue = 0
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
             guard let self else { return }
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.3
                 self.headerMessageLabel.animator().alphaValue = 0
-                self.headerTitleLabel.animator().alphaValue = 1
+                self.updateHeaderState(animated: true)
             }
         }
+    }
+
+    private func updateHeaderState(animated: Bool) {
+        let hasSelection = !selectedItemIDs.isEmpty
+        headerTitleLabel.stringValue = hasSelection ? "Delete ratings?" : "Rated"
+        let titleAlpha: CGFloat = 1
+        let actionAlpha: CGFloat = hasSelection ? 1 : 0
+        headerActionStack.isHidden = !hasSelection
+        if animated {
+            headerTitleLabel.animator().alphaValue = titleAlpha
+            headerActionStack.animator().alphaValue = actionAlpha
+        } else {
+            headerTitleLabel.alphaValue = titleAlpha
+            headerActionStack.alphaValue = actionAlpha
+        }
+    }
+
+    private func makeHeaderActionButton(title: String, action: Selector) -> NSButton {
+        let button = NSButton(title: title, target: self, action: action)
+        button.isBordered = false
+        button.font = NSFont.systemFont(ofSize: 11, weight: .regular)
+        button.contentTintColor = NSColor.secondaryLabelColor
+        return button
+    }
+
+    @objc private func toggleSelection(_ sender: RatingSelectButton) {
+        guard let itemName = sender.itemName else { return }
+        if sender.state == .on {
+            selectedItemIDs.insert(itemName)
+        } else {
+            selectedItemIDs.remove(itemName)
+        }
+        updateHeaderState(animated: true)
+    }
+
+    @objc private func confirmDeleteSelection() {
+        let ids = selectedItemIDs
+        ids.forEach { store.deleteItem(name: $0) }
+        selectedItemIDs.removeAll()
+        rebuildList()
+        updateHeaderState(animated: true)
+    }
+
+    @objc private func cancelDeleteSelection() {
+        selectedItemIDs.removeAll()
+        rebuildList()
+        updateHeaderState(animated: true)
     }
 
     func controlTextDidChange(_ obj: Notification) {
