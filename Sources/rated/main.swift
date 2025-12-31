@@ -130,7 +130,7 @@ final class RatingStore {
 
 final class ToggleCircleButton: NSButton {
     var isExpanded: Bool = false {
-        didSet { updateAppearance() }
+        didSet { needsDisplay = true }
     }
 
     override var intrinsicContentSize: NSSize {
@@ -139,15 +139,10 @@ final class ToggleCircleButton: NSButton {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        wantsLayer = true
-        layer?.masksToBounds = true
         isBordered = false
         title = ""
         setButtonType(.momentaryChange)
         focusRingType = .none
-        imagePosition = .imageOnly
-        imageScaling = .scaleNone
-        updateAppearance()
     }
 
     required init?(coder: NSCoder) {
@@ -156,17 +151,39 @@ final class ToggleCircleButton: NSButton {
 
     override func layout() {
         super.layout()
-        layer?.cornerRadius = bounds.height / 2
-        layer?.cornerCurve = .continuous
+        needsDisplay = true
     }
 
-    private func updateAppearance() {
-        let symbolName = isExpanded ? "xmark" : "plus"
-        let config = NSImage.SymbolConfiguration(pointSize: 10, weight: .light)
-        image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)?
-            .withSymbolConfiguration(config)
-        contentTintColor = .white
-        layer?.backgroundColor = (isExpanded ? NSColor.darkGray : NSColor.systemBlue).cgColor
+    override func draw(_ dirtyRect: NSRect) {
+        let background = isExpanded ? NSColor.darkGray : NSColor.systemBlue
+        background.setFill()
+        NSBezierPath(ovalIn: bounds).fill()
+
+        let lineWidth: CGFloat = 1.6
+        let inset: CGFloat = 6
+        let midX = bounds.midX
+        let midY = bounds.midY
+
+        NSColor.white.setStroke()
+        let path = NSBezierPath()
+        path.lineWidth = lineWidth
+        path.lineCapStyle = .round
+
+        if isExpanded {
+            let xInset = inset
+            path.move(to: NSPoint(x: bounds.minX + xInset, y: bounds.minY + xInset))
+            path.line(to: NSPoint(x: bounds.maxX - xInset, y: bounds.maxY - xInset))
+            path.move(to: NSPoint(x: bounds.minX + xInset, y: bounds.maxY - xInset))
+            path.line(to: NSPoint(x: bounds.maxX - xInset, y: bounds.minY + xInset))
+        } else {
+            path.move(to: NSPoint(x: bounds.minX + inset, y: midY))
+            path.line(to: NSPoint(x: bounds.maxX - inset, y: midY))
+            // Vertical stroke for plus
+            path.move(to: NSPoint(x: midX, y: bounds.minY + inset))
+            path.line(to: NSPoint(x: midX, y: bounds.maxY - inset))
+        }
+
+        path.stroke()
     }
 }
 
