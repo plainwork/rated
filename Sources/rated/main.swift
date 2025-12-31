@@ -261,8 +261,46 @@ final class RatingRowView: NSView {
     }
 }
 
-final class RatingSelectButton: NSButton {
+class RatingSelectButton: NSButton {
     var itemName: String?
+}
+
+final class HeaderActionButton: NSButton {
+    private var trackingArea: NSTrackingArea?
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        isBordered = false
+        focusRingType = .none
+        wantsLayer = true
+        layer?.cornerRadius = 10
+        layer?.backgroundColor = NSColor.clear.cgColor
+        contentTintColor = NSColor.secondaryLabelColor
+        font = NSFont.systemFont(ofSize: 12, weight: .medium)
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea = trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeInActiveApp, .inVisibleRect]
+        let trackingArea = NSTrackingArea(rect: .zero, options: options, owner: self, userInfo: nil)
+        addTrackingArea(trackingArea)
+        self.trackingArea = trackingArea
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        layer?.backgroundColor = NSColor.clear.cgColor
+    }
 }
 
 final class RatingInputView: NSView {
@@ -703,10 +741,11 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     }
 
     private func makeRowView(for item: RatingItem) -> NSView {
-        let selectButton = RatingSelectButton()
-        selectButton.setButtonType(.switch)
-        selectButton.title = ""
-        selectButton.isBordered = false
+        let selectButton = RatingSelectButton(checkboxWithTitle: "", target: self, action: #selector(toggleSelection(_:)))
+        selectButton.wantsLayer = true
+        selectButton.layer?.backgroundColor = NSColor.white.cgColor
+        selectButton.layer?.cornerRadius = 4
+        selectButton.layer?.masksToBounds = true
         selectButton.target = self
         selectButton.action = #selector(toggleSelection(_:))
         selectButton.itemName = item.id
@@ -801,10 +840,8 @@ final class RatedViewController: NSViewController, NSTextFieldDelegate {
     }
 
     private func makeHeaderActionButton(title: String, action: Selector) -> NSButton {
-        let button = NSButton(title: title, target: self, action: action)
+        let button = HeaderActionButton(title: title, target: self, action: action)
         button.isBordered = false
-        button.font = NSFont.systemFont(ofSize: 11, weight: .regular)
-        button.contentTintColor = NSColor.secondaryLabelColor
         return button
     }
 
