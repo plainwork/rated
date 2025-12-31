@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.0.3 - 2025-12-31
+- smaller menu icon (8f37d00)
+
 ## v0.0.2 - 2025-12-31
 - add icons (9aecb03)
 
