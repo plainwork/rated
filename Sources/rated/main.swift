@@ -318,7 +318,7 @@ final class HeaderActionButton: NSButton {
 }
 
 final class RatingInputView: NSView {
-    var rating: Int = 3 {
+    var rating: Int = 0 {
         didSet { needsDisplay = true }
     }
     var onSelection: ((Int) -> Void)?
